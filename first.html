@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theater Booking App</title>
+<style>
+body { background:#0b0e14; color:#fff; font-family:Arial,sans-serif; margin:0; }
+header { padding:15px; text-align:center; background:#111; font-size:24px; color:#00e0ff; font-weight:bold; }
+.page { display:none; padding:20px; }
+.active { display:block; }
+.grid { display:grid; gap:16px; }
+.movies { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); }
+.theaters { grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
+.card { background:#111; border-radius:12px; overflow:hidden; cursor:pointer; text-align:center; }
+.card img { width:100%; height:220px; object-fit:cover; }
+.card h3 { margin:8px 0; color:#00e0ff; }
+.seats { display:flex; flex-direction:column; gap:8px; margin-top:20px; }
+.row { display:flex; gap:8px; }
+.seat { flex:1; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; }
+.seat.silver { background:#444; }
+.seat.gold { background:linear-gradient(180deg,#ffe08a,#f0b400); color:#061417; }
+.seat.premium { background:linear-gradient(180deg,#ffb46a,#ff7a00); color:#061417; }
+.seat.selected { outline:2px solid #00e0ff; }
+.summary { margin-top:16px; background:#111; padding:12px; border-radius:10px; }
+.btn { background:#00e0ff; color:#000; padding:10px 18px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:12px; }
+.ticket { background:#111; padding:20px; border-radius:12px; margin-top:20px; text-align:center; }
+.ticket img { max-width:100%; border-radius:8px; margin:10px 0; }
+</style>
+</head>
+<body>
+<header>Ultimate Theater Booking — Coimbatore</header>
+
+<div id="moviesPage" class="page active">
+<h2>🎬 Choose a Movie</h2>
+<div class="grid movies" id="movies"></div>
+</div>
+
+<div id="theatersPage" class="page">
+<h2 id="selectedMovieTitle"></h2>
+<div class="grid theaters" id="theaters"></div>
+</div>
+
+<div id="seatsPage" class="page">
+<h2 id="selectedTheaterTitle"></h2>
+<div class="seats" id="seats"></div>
+<div class="summary" id="summary"></div>
+<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+  <button class="btn" onclick="goToPayment()">Proceed to Payment</button>
+  <button class="btn" onclick="clearSeats()">Clear Selection</button>
+</div>
+</div>
+
+<div id="paymentPage" class="page">
+<h2>💳 Payment</h2>
+<div style="display:flex; gap:10px; flex-wrap:wrap">
+  <button class="btn" onclick="submitPayment('UPI')">Pay — UPI</button>
+  <button class="btn" onclick="submitPayment('Card')">Pay — Card</button>
+  <button class="btn" onclick="submitPayment('Wallet')">Pay — Wallet</button>
+  <button class="btn" onclick="submitPayment('NetBanking')">Pay — NetBanking</button>
+  <button class="btn" onclick="submitPayment('Cash')">Pay — Cash</button>
+</div>
+</div>
+
+<div id="ticketPage" class="page">
+<h2>🎫 Your Ticket</h2>
+<div class="ticket" id="ticketDetails"></div>
+</div>
+
+<script>
+const movies=[
+  {title:"Pushpa 2",poster:"https://i.ibb.co/n1V7Qy6/pushpa2.jpg"},
+  {title:"Kalki 2898 AD",poster:"https://i.ibb.co/tZp8jRk/kalki.jpg"},
+  {title:"Leo",poster:"https://i.ibb.co/5MW7Cjc/leo.jpg"}
+];
+const theaters=[
+  {name:"KG Cinemas"},{name:"SPI Cinemas"},{name:"Brookefields Mall"}
+];
+let selectedMovie=null, selectedTheater=null, selectedSeats=[];
+
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active');}
+
+// Render Movies
+const moviesDiv=document.getElementById('movies');
+movies.forEach(m=>{
+  const div=document.createElement('div');
+  div.className='card';
+  div.innerHTML=`<img src='${m.poster}' alt='${m.title}' onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"/><h3>${m.title}</h3>`;
+  div.onclick=()=>{
+    selectedMovie=m;
+    document.getElementById('selectedMovieTitle').innerText=`🎬 ${m.title} - Choose Theater`;
+    renderTheaters();
+    showPage('theatersPage');
+  };
+  moviesDiv.appendChild(div);
+});
+
+// Render Theaters
+function renderTheaters(){
+  const tDiv=document.getElementById('theaters'); tDiv.innerHTML='';
+  theaters.forEach(t=>{
+    const div=document.createElement('div'); div.className='card';
+    div.innerHTML=`<h3>${t.name}</h3>`;
+    div.onclick=()=>{
+      selectedTheater=t;
+      document.getElementById('selectedTheaterTitle').innerText=`${t.name} — ${selectedMovie.title}`;
+      renderSeats();
+      showPage('seatsPage');
+    };
+    tDiv.appendChild(div);
+  });
+}
+
+// Render Seats Row-wise with section prices
+function renderSeats(){
+  const seatsDiv=document.getElementById('seats'); seatsDiv.innerHTML=''; selectedSeats=[];
+  const rows=10, cols=10;
+  let seatNum=1;
+  for(let r=0;r<rows;r++){
+    const rowDiv=document.createElement('div'); rowDiv.className='row';
+    for(let c=0;c<cols;c++){
+      const seat=document.createElement('div');
+      let type='silver';
+      if(seatNum>80) type='premium';
+      else if(seatNum>50) type='gold';
+      seat.className='seat '+type;
+      seat.innerText=seatNum;
+      seat.dataset.id=seatNum;
+      seat.dataset.price=type==='premium'?300:type==='gold'?180:120;
+      seat.onclick=()=>{
+        if(seat.classList.contains('selected')){
+          seat.classList.remove('selected'); selectedSeats=selectedSeats.filter(s=>s.id!=seatNum);
+        } else {
+          seat.classList.add('selected'); selectedSeats.push({id:seatNum,price:Number(seat.dataset.price)});
+        }
+        updateSummary();
+      };
+      rowDiv.appendChild(seat);
+      seatNum++;
+    }
+    seatsDiv.appendChild(rowDiv);
+  }
+  updateSummary();
+}
+
+function updateSummary(){
+  const total=selectedSeats.reduce((sum,s)=>sum+s.price,0);
+  document.getElementById('summary').innerText=`Selected Seats: ${selectedSeats.map(s=>s.id).join(', ')} | Total: ₹${total}`;
+}
+
+function goToPayment(){
+  if(!selectedSeats.length){alert('Select at least one seat'); return;}
+  showPage('paymentPage');
+}
+
+function clearSeats(){
+  selectedSeats=[];
+  document.querySelectorAll('.seat.selected').forEach(s=>s.classList.remove('selected'));
+  updateSummary();
+}
+
+function submitPayment(method){
+  showPage('ticketPage');
+  const t=document.getElementById('ticketDetails');
+  const total=selectedSeats.reduce((sum,s)=>sum+s.price,0);
+  t.innerHTML=`<h3>${selectedMovie.title}</h3>
+<p>Theater: ${selectedTheater.name}</p>
+<p>Seats: ${selectedSeats.map(s=>s.id).join(', ')}</p>
+<p>Payment Method: ${method}</p>
+<p>Total Paid: ₹${total}</p>
+<img src='${selectedMovie.poster}' alt='${selectedMovie.title}' onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"/>`;
+}
+</script>
+</body>
+</html>
