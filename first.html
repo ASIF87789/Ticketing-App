@@ -3,172 +3,315 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Theater Booking App</title>
+<title>Ultimate Theater Booking — Coimbatore</title>
 <style>
-body { background:#0b0e14; color:#fff; font-family:Arial,sans-serif; margin:0; }
-header { padding:15px; text-align:center; background:#111; font-size:24px; color:#00e0ff; font-weight:bold; }
-.page { display:none; padding:20px; }
-.active { display:block; }
-.grid { display:grid; gap:16px; }
-.movies { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); }
-.theaters { grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
-.card { background:#111; border-radius:12px; overflow:hidden; cursor:pointer; text-align:center; }
-.card img { width:100%; height:220px; object-fit:cover; }
-.card h3 { margin:8px 0; color:#00e0ff; }
-.seats { display:flex; flex-direction:column; gap:8px; margin-top:20px; }
-.row { display:flex; gap:8px; }
-.seat { flex:1; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; }
-.seat.silver { background:#444; }
-.seat.gold { background:linear-gradient(180deg,#ffe08a,#f0b400); color:#061417; }
-.seat.premium { background:linear-gradient(180deg,#ffb46a,#ff7a00); color:#061417; }
-.seat.selected { outline:2px solid #00e0ff; }
-.summary { margin-top:16px; background:#111; padding:12px; border-radius:10px; }
-.btn { background:#00e0ff; color:#000; padding:10px 18px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:12px; }
-.ticket { background:#111; padding:20px; border-radius:12px; margin-top:20px; text-align:center; }
-.ticket img { max-width:100%; border-radius:8px; margin:10px 0; }
+  :root { --bg:#0b0e14; --panel:#0f1720; --muted:#98a2b3; --accent:#00e0ff; --accent-2:#ffbf00; --text:#e6f0ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: linear-gradient(180deg,#07101a,#051520); padding: 14px; border-bottom: 1px solid #11202e; }
+  header .wrap { max-width: 1100px; margin: auto; display: flex; align-items: center; gap: 12px; }
+  header img { width: 36px; height: 36px; border-radius: 8px; }
+  main { max-width: 1100px; margin: 18px auto; padding: 18px; }
+  h1 { margin: 0; font-size: 18px; }
+  .page { display: none; }
+  .active { display: block; }
+  .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .grid { display: grid; gap: 12px; }
+  .movies { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .theaters { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid #14222d; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px #00000033; }
+  .card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+  .card .meta { padding: 10px; }
+  .title { font-weight: 700; margin: 0 0 6px; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #0e1a26; color: var(--muted); border: 1px solid #193038; }
+  .times { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .time-btn { padding: 4px 6px; border-radius: 6px; border: 1px solid #183042; background: #071a24; color: var(--text); cursor: pointer; font-size: 12px; }
+  .time-btn:hover { outline: 2px solid rgba(0,224,255,.12); }
+  .screen { max-width: 920px; margin: 8px auto 14px; padding: 8px; text-align: center; background: linear-gradient(180deg,#fff,#cfe0ff); color: #001; border-radius: 8px; font-weight: 800; }
+  .seat-legend { display: flex; gap: 12px; justify-content: center; margin: 10px 0; color: var(--muted); font-size: 13px; }
+  .legend-box { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,.06); vertical-align: middle; margin-right: 6px; }
+  .legend-silver { background: #304156; }
+  .legend-gold { background: linear-gradient(180deg,#ffe08a,#f0b400); }
+  .legend-prem { background: linear-gradient(180deg,#ffb46a,#ff7a00); }
+  .seat-wrap { display: flex; flex-direction: column; gap: 12px; align-items: center; } /* more spacious */
+  .row-line { display: flex; gap: 12px; align-items: center; width: 100%; max-width: 920px; } /* more gap */
+  .row-label { width: 28px; text-align: right; padding-right: 6px; color: var(--muted); font-weight: 600; }
+  .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; } /* more gap */
+  .seat { height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid rgba(255,255,255,.04); cursor: pointer; user-select: none; }
+  .seat.silver { background: #2f3846; color: #e8f2ff; }
+  .seat.gold { background: linear-gradient(180deg,#ffe08a,#f0b400); color: #061417; font-weight: 700; }
+  .seat.premium { background: linear-gradient(180deg,#ffb46a,#ff7a00); color: #061417; font-weight: 700; }
+  .seat.blocked { background: #465466; color: #aab8cf; cursor: not-allowed; opacity: .9; }
+  .seat.selected { outline: 3px solid rgba(0,224,255,.18); box-shadow: 0 6px 18px rgba(0,224,255,.06); }
+  .summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--panel); border: 1px solid #122533; padding: 12px; border-radius: 10px; margin-top: 16px; }
+  .chip { background: #0f2633; padding: 8px 12px; border-radius: 999px; font-weight: 600; }
+  .controls { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { padding: 10px 14px; border-radius: 10px; border: none; background: var(--accent); color: #001; font-weight: 800; cursor: pointer; }
+  .btn.ghost { background: transparent; border: 1px solid #163041; color: var(--text); }
 </style>
 </head>
 <body>
-<header>Ultimate Theater Booking — Coimbatore</header>
+<header>
+  <div class="wrap">
+    <img src="https://img.icons8.com/external-justicon-flat-justicon/64/ffffff/external-popcorn-cinema-justicon-flat-justicon.png" alt="logo" />
+    <div>
+      <h1>Coimbatore Theater Booking — Ultimate</h1>
+      <div style="color:var(--muted); font-size:13px;">Realistic seating, billing, downloadable ticket with QR</div>
+    </div>
+  </div>
+</header>
+<main>
+  <section id="page-movies" class="page active">
+    <div class="section-title">
+      <h2>Pick a movie</h2>
+      <div style="color:var(--muted);">Click a showtime under a movie to continue</div>
+    </div>
+    <div id="moviesGrid" class="grid movies"></div>
+  </section>
 
-<div id="moviesPage" class="page active">
-<h2>🎬 Choose a Movie</h2>
-<div class="grid movies" id="movies"></div>
-</div>
+  <section id="page-theaters" class="page">
+    <div class="section-title">
+      <h2>Choose theater (Coimbatore)</h2>
+      <div style="color:var(--muted)"><button class="btn ghost" id="backToMovies">Back</button></div>
+    </div>
+    <div id="theatersGrid" class="grid theaters"></div>
+  </section>
 
-<div id="theatersPage" class="page">
-<h2 id="selectedMovieTitle"></h2>
-<div class="grid theaters" id="theaters"></div>
-</div>
+  <section id="page-seats" class="page">
+    <div class="section-title">
+      <h2>Select seats</h2>
+      <div style="color:var(--muted)"><button class="btn ghost" id="backToTheaters">Back</button></div>
+    </div>
+    <div class="screen">SCREEN</div>
+    <div class="seat-legend">
+      <div><span class="legend-box legend-silver"></span> Silver — ₹120</div>
+      <div><span class="legend-box legend-gold"></span> Gold — ₹180</div>
+      <div><span class="legend-box legend-prem"></span> Premium — ₹300</div>
+    </div>
+    <div id="seatMount" class="seat-wrap"></div>
+    <div class="summary">
+      <div class="chip">Selected Seats: <span id="selectedSeats">0</span></div>
+      <div class="chip">Total: ₹ <span id="totalAmount">0</span></div>
+      <button class="btn" id="proceedPayment">Proceed to Pay</button>
+    </div>
+  </section>
 
-<div id="seatsPage" class="page">
-<h2 id="selectedTheaterTitle"></h2>
-<div class="seats" id="seats"></div>
-<div class="summary" id="summary"></div>
-<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-  <button class="btn" onclick="goToPayment()">Proceed to Payment</button>
-  <button class="btn" onclick="clearSeats()">Clear Selection</button>
-</div>
-</div>
+  <section id="page-payment" class="page">
+    <div class="section-title">
+      <h2>Payment</h2>
+      <div style="color:var(--muted)"><button class="btn ghost" id="backToSeats">Back</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+      <button class="btn pay" data-method="UPI">Pay — UPI</button>
+      <button class="btn pay" data-method="Card">Pay — Card</button>
+      <button class="btn pay" data-method="Wallet">Pay — Wallet</button>
+      <button class="btn pay" data-method="NetBanking">Pay — NetBanking</button>
+      <button class="btn pay" data-method="PayPal">Pay — PayPal</button>
+      <button class="btn pay" data-method="GooglePay">Pay — Google Pay</button>
+    </div>
+  </section>
 
-<div id="paymentPage" class="page">
-<h2>💳 Payment</h2>
-<div style="display:flex; gap:10px; flex-wrap:wrap">
-  <button class="btn" onclick="submitPayment('UPI')">Pay — UPI</button>
-  <button class="btn" onclick="submitPayment('Card')">Pay — Card</button>
-  <button class="btn" onclick="submitPayment('Wallet')">Pay — Wallet</button>
-  <button class="btn" onclick="submitPayment('NetBanking')">Pay — NetBanking</button>
-  <button class="btn" onclick="submitPayment('Cash')">Pay — Cash</button>
-</div>
-</div>
+  <section id="page-bill" class="page">
+    <div class="section-title">
+      <h2>Booking Confirmed — Ticket</h2>
+    </div>
+    <div class="bill">
+      <div class="ticket" id="ticketCard">
+        <div class="ticket-header">
+          <div>
+            <div style="font-weight:900">CBE Movies</div>
+            <div style="color:var(--muted);font-size:13px">E-Ticket</div>
+          </div>
+          <div style="text-align:right">
+            <div style="color:var(--muted);font-size:12px">Booking ID</div>
+            <div id="billId" style="font-weight:900">—</div>
+          </div>
+        </div>
+        <div class="ticket-body" style="margin-top:12px">
+          <div>
+            <div style="font-weight:800;font-size:16px" id="billMovie">—</div>
+            <div style="color:var(--muted);margin-top:4px" id="billTheater">—</div>
+            <div style="margin-top:12px" class="kv">
+              <div class="cell"><div style="color:var(--muted);font-size:12px">Show time</div><div id="billTime" style="font-weight:800"></div></div>
+              <div class="cell"><div style="color:var(--muted);font-size:12px">Seats</div><div id="billSeats" style="font-weight:800"></div></div>
+              <div class="cell"><div style="color:var(--muted);font-size:12px">Class</div><div id="billClass" style="font-weight:800"></div></div>
+              <div class="cell"><div style="color:var(--muted);font-size:12px">Total Paid</div><div style="font-weight:900">₹ <span id="billTotal">0</span></div></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+            <img id="billPoster" src="" alt="poster" style="width:220px;border-radius:10px;object-fit:cover" />
+            <div class="qr-box" id="qrBox"></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="color:var(--muted);font-size:13px">Non-transferable • Government taxes included</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn ghost" id="btnPrint">Print</button>
+            <button class="btn" id="btnDownload">Download PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:12px"><button class="btn ghost" onclick="location.reload()">Book another</button></div>
+  </section>
+</main>
 
-<div id="ticketPage" class="page">
-<h2>🎫 Your Ticket</h2>
-<div class="ticket" id="ticketDetails"></div>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-const movies=[
-  {title:"Pushpa 2",poster:"https://i.ibb.co/n1V7Qy6/pushpa2.jpg"},
-  {title:"Kalki 2898 AD",poster:"https://i.ibb.co/tZp8jRk/kalki.jpg"},
-  {title:"Leo",poster:"https://i.ibb.co/5MW7Cjc/leo.jpg"}
+// Movie & Theater data with new image source
+const MOVIES = [
+  { name:'Leo', poster:'https://placeimg.com/200/300/any?1', times:['10:30 AM','2:15 PM','6:45 PM','10:00 PM'] },
+  { name:'Jailer', poster:'https://placeimg.com/200/300/any?2', times:['9:45 AM','1:30 PM','5:45 PM','9:50 PM'] },
+  { name:'Vikram', poster:'https://placeimg.com/200/300/any?3', times:['10:15 AM','2:00 PM','6:30 PM','10:30 PM'] },
+  { name:'KGF 2', poster:'https://placeimg.com/200/300/any?4', times:['11:00 AM','3:00 PM','7:00 PM','10:45 PM'] },
+  { name:'Master', poster:'https://placeimg.com/200/300/any?5', times:['9:15 AM','12:45 PM','4:45 PM','9:15 PM'] },
+  { name:'RRR', poster:'https://placeimg.com/200/300/any?6', times:['10:00 AM','1:45 PM','6:00 PM','10:15 PM'] },
+  { name:'Kantara', poster:'https://placeimg.com/200/300/any?7', times:['9:40 AM','1:10 PM','5:30 PM','9:40 PM'] },
+  { name:'Avatar 2', poster:'https://placeimg.com/200/300/any?8', times:['10:20 AM','2:10 PM','6:40 PM','10:20 PM'] },
+  { name:'Spider-Man', poster:'https://placeimg.com/200/300/any?9', times:['11:00 AM','2:30 PM','6:15 PM','9:50 PM'] },
+  { name:'The Batman', poster:'https://placeimg.com/200/300/any?10', times:['10:15 AM','1:50 PM','5:30 PM','9:10 PM'] },
+  { name:'Dune', poster:'https://placeimg.com/200/300/any?11', times:['9:30 AM','12:30 PM','4:30 PM','8:00 PM'] },
+  { name:'Guardians', poster:'https://placeimg.com/200/300/any?12', times:['10:45 AM','2:15 PM','6:45 PM','10:30 PM'] }
 ];
-const theaters=[
-  {name:"KG Cinemas"},{name:"SPI Cinemas"},{name:"Brookefields Mall"}
+
+const THEATERS = [
+  'KG Cinemas','SPI Cinemas','Fun Republic','Brookefields Cinemas','Senthil Kumaran','Lakshmi Cinemas','Manis Theater','Rathna Cinemas',
+  'City Gold','Vetri Theater','Palace Cinemas','Galaxy Cinemas'
 ];
-let selectedMovie=null, selectedTheater=null, selectedSeats=[];
 
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active');}
+const PRICES = { silver:120, gold:180, premium:300 };
+const booking = { movie:null, poster:null, theater:null, time:null, seats:[], total:0, id:null };
 
-// Render Movies
-const moviesDiv=document.getElementById('movies');
-movies.forEach(m=>{
-  const div=document.createElement('div');
-  div.className='card';
-  div.innerHTML=`<img src='${m.poster}' alt='${m.title}' onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"/><h3>${m.title}</h3>`;
-  div.onclick=()=>{
-    selectedMovie=m;
-    document.getElementById('selectedMovieTitle').innerText=`🎬 ${m.title} - Choose Theater`;
-    renderTheaters();
-    showPage('theatersPage');
-  };
-  moviesDiv.appendChild(div);
-});
+const $ = s => document.querySelector(s);
+function goto(pageId){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); }
 
-// Render Theaters
-function renderTheaters(){
-  const tDiv=document.getElementById('theaters'); tDiv.innerHTML='';
-  theaters.forEach(t=>{
-    const div=document.createElement('div'); div.className='card';
-    div.innerHTML=`<h3>${t.name}</h3>`;
-    div.onclick=()=>{
-      selectedTheater=t;
-      document.getElementById('selectedTheaterTitle').innerText=`${t.name} — ${selectedMovie.title}`;
-      renderSeats();
-      showPage('seatsPage');
-    };
-    tDiv.appendChild(div);
+// Movie rendering
+(function renderMovies(){
+  const grid = $('#moviesGrid');
+  MOVIES.forEach(m=>{
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML = `<img src="${m.poster}" alt="${m.name}" />
+      <div class="meta"><div class="title">${m.name}</div>
+      <div class="tags"><div class="tag">2D</div><div class="tag">U/A</div></div>
+      <div class="times">${m.times.map(t=>`<button class="time-btn" data-movie="${m.name}" data-poster="${m.poster}" data-time="${t}">${t}</button>`).join('')}</div></div>`;
+    grid.appendChild(card);
   });
+  grid.addEventListener('click', e=>{
+    const btn = e.target.closest('.time-btn');
+    if(!btn) return;
+    booking.movie = btn.dataset.movie;
+    booking.poster = btn.dataset.poster;
+    booking.time = btn.dataset.time;
+    goto('page-theaters');
+  });
+})();
+
+// Theater rendering
+(function renderTheaters(){
+  const grid = $('#theatersGrid');
+  THEATERS.forEach((t,i)=>{
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML = `<img src="https://placeimg.com/300/200/arch?${i+1}" alt="${t}" /><div class="meta">
+      <div class="title">${t}</div><div style="color:var(--muted);margin-top:6px">Coimbatore</div>
+      <div style="margin-top:8px"><button class="btn ghost select-theater">Select</button></div></div>`;
+    card.querySelector('.select-theater').addEventListener('click', ()=>{ booking.theater = t; mountSeats(); goto('page-seats'); });
+    grid.appendChild(card);
+  });
+})();
+
+// Navigation buttons
+$('#backToMovies').addEventListener('click', ()=>goto('page-movies'));
+$('#backToTheaters').addEventListener('click', ()=>goto('page-theaters'));
+$('#proceedPayment').addEventListener('click', ()=>goto('page-payment'));
+
+// Seat rendering with aisles and random blocked seats
+function mountSeats(){
+  const seatMount = $('#seatMount');
+  seatMount.innerHTML='';
+  const rows = 8;
+  const cols = 12;
+  const aisleAfter = 6; // create aisle after 6 seats
+  const types = ['silver','silver','gold','gold','premium','premium','silver','silver'];
+  booking.seats=[];
+
+  for(let r=0;r<rows;r++){
+    const rowLine = document.createElement('div');
+    rowLine.className='row-line';
+    const label = document.createElement('div'); label.className='row-label'; label.textContent=String.fromCharCode(65+r);
+    const row = document.createElement('div'); row.className='row';
+
+    for(let c=1;c<=cols;c++){
+      if(c===aisleAfter+1) { const gap = document.createElement('div'); gap.style.width='12px'; row.appendChild(gap); }
+      const seat = document.createElement('div');
+      seat.className=`seat ${types[r]}`;
+      seat.textContent=c;
+      seat.dataset.row=String.fromCharCode(65+r);
+      seat.dataset.num=c;
+      seat.dataset.type=types[r];
+      if(Math.random()<0.15) seat.classList.add('blocked');
+      seat.addEventListener('click', ()=>toggleSeat(seat));
+      row.appendChild(seat);
+    }
+    rowLine.appendChild(label); 
+    rowLine.appendChild(row);
+    seatMount.appendChild(rowLine);
+  }
 }
 
-// Render Seats Row-wise with section prices
-function renderSeats(){
-  const seatsDiv=document.getElementById('seats'); seatsDiv.innerHTML=''; selectedSeats=[];
-  const rows=10, cols=10;
-  let seatNum=1;
-  for(let r=0;r<rows;r++){
-    const rowDiv=document.createElement('div'); rowDiv.className='row';
-    for(let c=0;c<cols;c++){
-      const seat=document.createElement('div');
-      let type='silver';
-      if(seatNum>80) type='premium';
-      else if(seatNum>50) type='gold';
-      seat.className='seat '+type;
-      seat.innerText=seatNum;
-      seat.dataset.id=seatNum;
-      seat.dataset.price=type==='premium'?300:type==='gold'?180:120;
-      seat.onclick=()=>{
-        if(seat.classList.contains('selected')){
-          seat.classList.remove('selected'); selectedSeats=selectedSeats.filter(s=>s.id!=seatNum);
-        } else {
-          seat.classList.add('selected'); selectedSeats.push({id:seatNum,price:Number(seat.dataset.price)});
-        }
-        updateSummary();
-      };
-      rowDiv.appendChild(seat);
-      seatNum++;
-    }
-    seatsDiv.appendChild(rowDiv);
+function toggleSeat(seat){
+  if(seat.classList.contains('blocked')) return;
+  const seatId = seat.dataset.row+seat.dataset.num;
+  if(seat.classList.contains('selected')){
+    seat.classList.remove('selected');
+    booking.seats = booking.seats.filter(s=>s.id!==seatId);
+  } else {
+    seat.classList.add('selected');
+    booking.seats.push({ id:seatId, type:seat.dataset.type, price:PRICES[seat.dataset.type] });
   }
   updateSummary();
 }
 
 function updateSummary(){
-  const total=selectedSeats.reduce((sum,s)=>sum+s.price,0);
-  document.getElementById('summary').innerText=`Selected Seats: ${selectedSeats.map(s=>s.id).join(', ')} | Total: ₹${total}`;
+  const total = booking.seats.reduce((sum,s)=>sum+s.price,0);
+  $('#selectedSeats').textContent = booking.seats.map(s=>s.id).join(',');
+  $('#totalAmount').textContent = total;
+  booking.total = total;
 }
 
-function goToPayment(){
-  if(!selectedSeats.length){alert('Select at least one seat'); return;}
-  showPage('paymentPage');
-}
+// Payment logic
+document.querySelectorAll('.pay').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    booking.id = 'BKG'+Math.floor(Math.random()*1000000);
+    goto('page-bill');
+    renderBill();
+  });
+});
 
-function clearSeats(){
-  selectedSeats=[];
-  document.querySelectorAll('.seat.selected').forEach(s=>s.classList.remove('selected'));
-  updateSummary();
-}
+// Bill rendering with QR
+function renderBill(){
+  $('#billId').textContent = booking.id;
+  $('#billMovie').textContent = booking.movie;
+  $('#billTheater').textContent = booking.theater;
+  $('#billTime').textContent = booking.time;
+  $('#billSeats').textContent = booking.seats.map(s=>s.id).join(',');
+  $('#billClass').textContent = booking.seats.map(s=>s.type).join(',');
+  $('#billTotal').textContent = booking.total;
+  $('#billPoster').src = booking.poster;
 
-function submitPayment(method){
-  showPage('ticketPage');
-  const t=document.getElementById('ticketDetails');
-  const total=selectedSeats.reduce((sum,s)=>sum+s.price,0);
-  t.innerHTML=`<h3>${selectedMovie.title}</h3>
-<p>Theater: ${selectedTheater.name}</p>
-<p>Seats: ${selectedSeats.map(s=>s.id).join(', ')}</p>
-<p>Payment Method: ${method}</p>
-<p>Total Paid: ₹${total}</p>
-<img src='${selectedMovie.poster}' alt='${selectedMovie.title}' onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"/>`;
+  const qrBox = $('#qrBox');
+  qrBox.innerHTML='';
+  new QRCode(qrBox, { text:`Booking:${booking.id} Movie:${booking.movie} Seats:${booking.seats.map(s=>s.id).join(',')}`, width:120, height:120 });
+
+  $('#btnDownload').onclick = ()=> {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.html($('#ticketCard'), { callback: function(pdf){ pdf.save(booking.id+'.pdf'); } });
+  };
+  $('#btnPrint').onclick = ()=> window.print();
 }
 </script>
 </body>
