@@ -162,18 +162,18 @@
 <script>
 // Movie & Theater data with new image source
 const MOVIES = [
-  { name:'Leo', poster:'https://placeimg.com/200/300/any?1', times:['10:30 AM','2:15 PM','6:45 PM','10:00 PM'] },
-  { name:'Jailer', poster:'https://placeimg.com/200/300/any?2', times:['9:45 AM','1:30 PM','5:45 PM','9:50 PM'] },
-  { name:'Vikram', poster:'https://placeimg.com/200/300/any?3', times:['10:15 AM','2:00 PM','6:30 PM','10:30 PM'] },
-  { name:'KGF 2', poster:'https://placeimg.com/200/300/any?4', times:['11:00 AM','3:00 PM','7:00 PM','10:45 PM'] },
-  { name:'Master', poster:'https://placeimg.com/200/300/any?5', times:['9:15 AM','12:45 PM','4:45 PM','9:15 PM'] },
-  { name:'RRR', poster:'https://placeimg.com/200/300/any?6', times:['10:00 AM','1:45 PM','6:00 PM','10:15 PM'] },
-  { name:'Kantara', poster:'https://placeimg.com/200/300/any?7', times:['9:40 AM','1:10 PM','5:30 PM','9:40 PM'] },
-  { name:'Avatar 2', poster:'https://placeimg.com/200/300/any?8', times:['10:20 AM','2:10 PM','6:40 PM','10:20 PM'] },
-  { name:'Spider-Man', poster:'https://placeimg.com/200/300/any?9', times:['11:00 AM','2:30 PM','6:15 PM','9:50 PM'] },
-  { name:'The Batman', poster:'https://placeimg.com/200/300/any?10', times:['10:15 AM','1:50 PM','5:30 PM','9:10 PM'] },
-  { name:'Dune', poster:'https://placeimg.com/200/300/any?11', times:['9:30 AM','12:30 PM','4:30 PM','8:00 PM'] },
-  { name:'Guardians', poster:'https://placeimg.com/200/300/any?12', times:['10:45 AM','2:15 PM','6:45 PM','10:30 PM'] }
+  { name:'Leo', poster:'https://picsum.photos/200/300?random=1', times:['10:30 AM','2:15 PM','6:45 PM','10:00 PM'] },
+  { name:'Jailer', poster:'https://picsum.photos/200/300?random=2', times:['9:45 AM','1:30 PM','5:45 PM','9:50 PM'] },
+  { name:'Vikram', poster:'https://picsum.photos/200/300?random=3', times:['10:15 AM','2:00 PM','6:30 PM','10:30 PM'] },
+  { name:'KGF 2', poster:'https://picsum.photos/200/300?random=4', times:['11:00 AM','3:00 PM','7:00 PM','10:45 PM'] },
+  { name:'Master', poster:'https://picsum.photos/200/300?random=5', times:['9:15 AM','12:45 PM','4:45 PM','9:15 PM'] },
+  { name:'RRR', poster:'https://picsum.photos/200/300?random=6', times:['10:00 AM','1:45 PM','6:00 PM','10:15 PM'] },
+  { name:'Kantara', poster:'https://picsum.photos/200/300?random=7', times:['9:40 AM','1:10 PM','5:30 PM','9:40 PM'] },
+  { name:'Avatar 2', poster:'https://picsum.photos/200/300?random=8', times:['10:20 AM','2:10 PM','6:40 PM','10:20 PM'] },
+  { name:'Spider-Man', poster:'https://picsum.photos/200/300?random=9', times:['11:00 AM','2:30 PM','6:15 PM','9:50 PM'] },
+  { name:'The Batman', poster:'https://picsum.photos/200/300?random=10', times:['10:15 AM','1:50 PM','5:30 PM','9:10 PM'] },
+  { name:'Dune', poster:'https://picsum.photos/200/300?random=11', times:['9:30 AM','12:30 PM','4:30 PM','8:00 PM'] },
+  { name:'Guardians', poster:'https://picsum.photos/200/300?random=12', times:['10:45 AM','2:15 PM','6:45 PM','10:30 PM'] }
 ];
 
 const THEATERS = [
@@ -194,9 +194,11 @@ function goto(pageId){ document.querySelectorAll('.page').forEach(p=>p.classList
     const card = document.createElement('div');
     card.className='card';
     card.innerHTML = `<img src="${m.poster}" alt="${m.name}" />
-      <div class="meta"><div class="title">${m.name}</div>
-      <div class="tags"><div class="tag">2D</div><div class="tag">U/A</div></div>
-      <div class="times">${m.times.map(t=>`<button class="time-btn" data-movie="${m.name}" data-poster="${m.poster}" data-time="${t}">${t}</button>`).join('')}</div></div>`;
+      <div style="text-align:center;font-weight:700;margin:8px 0 0 0;">${m.name}</div>
+      <div class="meta">
+        <div class="tags"><div class="tag">2D</div><div class="tag">U/A</div></div>
+        <div class="times">${m.times.map(t=>`<button class="time-btn" data-movie="${m.name}" data-poster="${m.poster}" data-time="${t}">${t}</button>`).join('')}</div>
+      </div>`;
     grid.appendChild(card);
   });
   grid.addEventListener('click', e=>{

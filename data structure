@@ -1,0 +1,216 @@
+"""
+Pharmacy Management System (Python)
+Combines:
+ - Inventory Management (dict)
+ - Expiry Tracker (min-heap via heapq)
+ - Prescription System (queue via collections.deque)
+
+Author: ChatGPT (example)
+"""
+
+from dataclasses import dataclass, field
+from datetime import datetime, date
+import heapq
+from collections import deque
+import itertools
+from typing import Dict, List, Tuple, Optional
+
+
+def parse_date(s: str) -> date:
+    """Parse date from YYYY-MM-DD string to datetime.date. Raises ValueError if bad format."""
+    return datetime.strptime(s, "%Y-%m-%d").date()
+
+
+@dataclass
+class Medicine:
+    med_id: str
+    name: str
+    price: float
+    expiry: date
+    stock: int
+
+    def __repr__(self):
+        return (f"Medicine(id={self.med_id!r}, name={self.name!r}, price={self.price}, "
+                f"expiry={self.expiry.isoformat()}, stock={self.stock})")
+
+    def to_display(self):
+        return (self.med_id, self.name, f"{self.price:.2f}", self.expiry.isoformat(), str(self.stock))
+
+
+class Inventory:
+    """Inventory implemented as a dictionary keyed by med_id."""
+    def __init__(self):
+        self.meds: Dict[str, Medicine] = {}
+
+    def add_medicine(self, med: Medicine) -> None:
+        if med.med_id in self.meds:
+            raise ValueError(f"Medicine with id {med.med_id} already exists.")
+        self.meds[med.med_id] = med
+
+    def update_medicine(self, med_id: str, **kwargs) -> None:
+        if med_id not in self.meds:
+            raise KeyError(f"No medicine with id {med_id}.")
+        med = self.meds[med_id]
+        for k, v in kwargs.items():
+            if hasattr(med, k):
+                setattr(med, k, v)
+            else:
+                raise KeyError(f"Invalid attribute '{k}' for Medicine.")
+
+    def remove_medicine(self, med_id: str) -> None:
+        if med_id in self.meds:
+            del self.meds[med_id]
+        else:
+            raise KeyError(f"No medicine with id {med_id}.")
+
+    def search_by_id(self, med_id: str) -> Optional[Medicine]:
+        return self.meds.get(med_id)
+
+    def search_by_name(self, name_substr: str) -> List[Medicine]:
+        name_substr = name_substr.lower()
+        return [m for m in self.meds.values() if name_substr in m.name.lower()]
+
+    def list_all(self) -> List[Medicine]:
+        return list(self.meds.values())
+
+    def deduct_stock(self, med_id: str, amount: int) -> None:
+        if med_id not in self.meds:
+            raise KeyError(f"No medicine with id {med_id}.")
+        med = self.meds[med_id]
+        if amount > med.stock:
+            raise ValueError(f"Not enough stock for {med.name} (requested {amount}, available {med.stock}).")
+        med.stock -= amount
+
+    def get_expiry(self, med_id: str) -> Optional[date]:
+        med = self.meds.get(med_id)
+        return med.expiry if med else None
+
+
+class ExpiryTracker:
+    """
+    Tracks medicines by expiry using a min-heap of tuples:
+    (expiry_date, counter, med_id)
+    """
+    def __init__(self, inventory: Inventory):
+        self.inventory = inventory
+        self.heap: List[Tuple[date, int, str]] = []
+        self.counter = itertools.count()
+        self.latest_expiry: Dict[str, date] = {}
+
+    def add_or_update(self, med_id: str) -> None:
+        expiry = self.inventory.get_expiry(med_id)
+        if expiry is None:
+            return
+        cnt = next(self.counter)
+        heapq.heappush(self.heap, (expiry, cnt, med_id))
+        self.latest_expiry[med_id] = expiry
+
+    def remove_med(self, med_id: str) -> None:
+        if med_id in self.latest_expiry:
+            del self.latest_expiry[med_id]
+
+    def pop_expiring(self, today: date = None) -> List[Medicine]:
+        if today is None:
+            today = date.today()
+
+        expired_meds: List[Medicine] = []
+        while self.heap and self.heap[0][0] <= today:
+            expiry, _, med_id = heapq.heappop(self.heap)
+            latest = self.latest_expiry.get(med_id)
+            if latest is None or latest != expiry:
+                continue
+            med = self.inventory.search_by_id(med_id)
+            if med:
+                expired_meds.append(med)
+                try:
+                    self.inventory.remove_medicine(med_id)
+                except KeyError:
+                    pass
+            del self.latest_expiry[med_id]
+        return expired_meds
+
+    def get_soonest(self, n: int = 5) -> List[Tuple[Medicine, date]]:
+        result = []
+        seen = set()
+        temp = []
+        while self.heap and len(result) < n:
+            expiry, cnt, med_id = heapq.heappop(self.heap)
+            latest = self.latest_expiry.get(med_id)
+            if latest is None or latest != expiry:
+                continue
+            if med_id in seen:
+                continue
+            med = self.inventory.search_by_id(med_id)
+            if med:
+                result.append((med, expiry))
+                seen.add(med_id)
+            temp.append((expiry, cnt, med_id))
+        for item in temp:
+            heapq.heappush(self.heap, item)
+        return result
+
+
+@dataclass
+class Patient:
+    patient_id: str
+    name: str
+    prescription: List[Tuple[str, int]] = field(default_factory=list)
+
+
+class PrescriptionSystem:
+    def __init__(self, inventory: Inventory, expiry_tracker: ExpiryTracker):
+        self.inventory = inventory
+        self.expiry_tracker = expiry_tracker
+        self.queue: deque[Patient] = deque()
+        self.patient_counter = itertools.count(1)
+
+    def add_patient(self, name: str, prescription: List[Tuple[str, int]]) -> Patient:
+        pid = f"P{next(self.patient_counter)}"
+        patient = Patient(patient_id=pid, name=name, prescription=prescription)
+        self.queue.append(patient)
+        return patient
+
+    def serve_next(self) -> Tuple[bool, str]:
+        if not self.queue:
+            return False, "No patients in queue."
+
+        patient = self.queue[0]
+        missing = []
+        for med_id, qty in patient.prescription:
+            med = self.inventory.search_by_id(med_id)
+            if med is None:
+                missing.append((med_id, "Not found"))
+            elif med.stock < qty:
+                missing.append((med_id, f"Insufficient stock (need {qty}, have {med.stock})"))
+
+        if missing:
+            msg_lines = [f"Cannot serve patient {patient.patient_id} ({patient.name}) due to:"]
+            for med_id, reason in missing:
+                msg_lines.append(f" - {med_id}: {reason}")
+            return False, "\n".join(msg_lines)
+
+        for med_id, qty in patient.prescription:
+            self.inventory.deduct_stock(med_id, qty)
+        self.queue.popleft()
+        return True, f"Patient {patient.patient_id} ({patient.name}) served. Medicines dispensed."
+
+    def list_queue(self) -> List[Patient]:
+        return list(self.queue)
+
+
+# Demo Setup
+
+def demo_setup(inv: Inventory, exp: ExpiryTracker, pres: PrescriptionSystem):
+    sample = [
+        Medicine("M001", "Paracetamol", 30.0, parse_date("2025-12-31"), 50),
+        Medicine("M002", "Amoxicillin", 80.5, parse_date("2025-06-15"), 20),
+        Medicine("M003", "Cetirizine", 25.0, parse_date("2024-11-01"), 10),
+        Medicine("M004", "Ibuprofen", 40.0, parse_date("2026-01-01"), 15),
+    ]
+    for m in sample:
+        inv.add_medicine(m)
+        exp.add_or_update(m.med_id)
+
+    pres.add_patient("Alice", [("M001", 2), ("M003", 1)])
+    pres.add_patient("Bob", [("M002", 1)])
+    pres.add_patient("Charlie", [("M001", 5), ("M004", 1)])
